@@ -8,3 +8,4 @@ Pillow
 python-multipart
 pytest
 numpy
+httpx
