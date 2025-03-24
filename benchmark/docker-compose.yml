@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  mnist_benchmark:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./results:/app/results
+      - ./models:/app/models
+    environment:
+      - TF_FORCE_GPU_ALLOW_GROWTH=true
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]

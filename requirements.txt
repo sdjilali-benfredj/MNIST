@@ -1,6 +1,0 @@
-streamlit
-bcrypt
-requests
-pillow
-numpy
-streamlit-drawable-canvas
