@@ -34,7 +34,7 @@ if st.session_state.token is None:
         else:
             st.error("Nom d'utilisateur ou mot de passe incorrect.")
 
-    st.header("Créer un compte")
+    st.subheader("Créer un compte")
     username_new = st.text_input("Nouveau nom d'utilisateur")
     email_new = st.text_input("Email")
     password_new = st.text_input("Nouveau mot de passe", type="password")
