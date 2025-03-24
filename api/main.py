@@ -1,84 +1,59 @@
-import os
-import joblib
-from fastapi import FastAPI, UploadFile, HTTPException
-from fastapi.responses import JSONResponse
-from sklearn.datasets import fetch_openml
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import SGDClassifier
 import numpy as np
+from fastapi import FastAPI, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST, Counter, Gauge
+from models import ImageInput, PredictionOutput
+from cnn_model import cnn_model
+from tensorflow import keras
+from fastapi import Response
 from PIL import Image
-from tqdm import tqdm
-from sklearn.metrics import confusion_matrix
 
 app = FastAPI()
 
-MODEL_PATH = "models/mnist_model.joblib"
 IMAGE_SIZE = 28
 
+# CORS Middleware (Adjust as needed for your setup)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-def load_or_train_model():
-    """Charge le modèle pré-entraîné s'il existe, sinon l'entraîne et le sauvegarde."""
-    if os.path.exists(MODEL_PATH):
-        model = joblib.load(MODEL_PATH)
-    else:
-        mnist = fetch_openml("mnist_784", version=1, as_frame=False)
-        X, y = mnist["data"], mnist["target"]
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=42
-        )
-        model = SGDClassifier(max_iter=1000, tol=1e-4, loss='log_loss', alpha=0.0001)
-        batch_size = 100
-        n_batches = len(X_train) // batch_size
+# Metrics setup
+prediction_counter = Counter("prediction_count", "Number of predictions made")
+model_load_time = Gauge("model_load_time", "Time to load the CNN model")
+import time
 
-        for i in tqdm(range(n_batches)):
-            start = i * batch_size
-            end = start + batch_size
-            model.partial_fit(X_train[start:end], y_train[start:end], classes=np.unique(y_train))
+start_time = time.time()
+model = keras.models.load_model('cnn5r.keras')
+end_time = time.time()
 
-        os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
-        joblib.dump(model, MODEL_PATH)
-    return model
+model_load_time.set(end_time - start_time)
 
-model = load_or_train_model()
+@app.get("/metrics")
+async def metrics():
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
-@app.post("/predict")
+@app.post("/predict/", response_model=PredictionOutput)
 async def predict(file: UploadFile):
-    """Prédit le chiffre d'une image."""
-    try:
-        image = Image.open(file.file).convert("L").resize((IMAGE_SIZE, IMAGE_SIZE))
-        image_array = np.array(image).reshape(1, IMAGE_SIZE * IMAGE_SIZE) / 255.0
-        probabilities = model.predict_proba(image_array)[0]
+    """
+    Predicts the digit in the input image using the loaded CNN model.
+    """
+    image = Image.open(file.file).convert("L").resize((IMAGE_SIZE, IMAGE_SIZE))
+    image = np.array(image).reshape(1, IMAGE_SIZE , IMAGE_SIZE) / 255.0
 
-        # Remplacer NaN et inf par 0
-        probabilities = np.nan_to_num(probabilities, nan=0.0, posinf=0.0, neginf=0.0).tolist()
+    predictions = cnn_model.predict(image)
+    predicted_class = np.argmax(predictions, axis=1)[0]
+    confidence = float(np.max(predictions, axis=1)[0])
+    print("="*20)
+    print("predicted_class", predicted_class)
+    print("confidence", confidence)
+    print("="*20)
+    prediction_counter.inc()
+    return PredictionOutput(prediction=int(predicted_class), confidence=confidence)
 
-        predicted_class = int(model.predict(image_array)[0])
-        return JSONResponse({"probabilities": probabilities, "predicted_class": predicted_class})
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-@app.post("/retrain")
-async def retrain():
-    """Réentraîne le modèle et renvoie la matrice de confusion."""
-    try:
-        mnist = fetch_openml("mnist_784", version=1, as_frame=False)
-        X, y = mnist["data"], mnist["target"]
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=42
-        )
-        model = SGDClassifier(max_iter=1000, tol=1e-4, loss='log_loss', alpha=0.0001)
-        batch_size = 100
-        n_batches = len(X_train) // batch_size
-
-        for i in tqdm(range(n_batches)):
-            start = i * batch_size
-            end = start + batch_size
-            model.partial_fit(X_train[start:end], y_train[start:end], classes=np.unique(y_train))
-
-        joblib.dump(model, MODEL_PATH)
-
-        y_pred = model.predict(X_test)
-        cm = confusion_matrix(y_test, y_pred).tolist()  # Convertir en liste pour JSON
-        return JSONResponse({"message": "Modèle réentraîné avec succès", "confusion_matrix": cm})
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

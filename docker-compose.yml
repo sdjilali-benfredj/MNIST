@@ -1,19 +1,40 @@
 version: "3.8"
 services:
-  api:
+  fastapi:
     build: ./api
     ports:
       - "8000:8000"
+    networks:
+      - my_network
+    depends_on:
+      - prometheus
+      
+  prometheus:
+    image: prom/prometheus:latest
     volumes:
-      - ./api/models:/app/models
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - my_network
 
-  # test:
-  #   build: ./api
-  #   depends_on:
-  #     - api
-  #   command: pytest
-  #   volumes:
-  #     - ./api:/app
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/dashboards      
+    networks:
+      - my_network
+    depends_on:
+      - prometheus
+  node-exporter:
+    image: prom/node-exporter:latest
+    ports:
+      - "9100:9100"
+    networks:
+      - my_network
 
 
   streamlit:
@@ -21,4 +42,9 @@ services:
     ports:
       - "8501:8501"
     depends_on:
-      - api
+      - fastapi
+    networks:
+      - my_network
+
+networks:
+  my_network:

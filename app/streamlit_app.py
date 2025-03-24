@@ -43,24 +43,13 @@ if st.button("Prédire"):
 
         # Appel à l'API FastAPI
         files = {"file": ("canvas.png", img_bytes, "image/png")}
-        response = requests.post("http://api:8000/predict", files=files)  # Assurez-vous que l'URL correspond à votre API
+        response = requests.post("http://fastapi:8000/predict", files=files)  # Assurez-vous que l'URL correspond à votre API
         if response.status_code == 200:
             result = response.json()
-            st.write("Prédiction :", result["predicted_class"])
-            st.write("Probabilités :", result["probabilities"])
+            st.write("Prédiction :", result["prediction"])
+            st.write("Probabilités :", result["confidence"])
         else:
             st.error("Erreur lors de la prédiction.")
     else:
         st.warning("Veuillez dessiner un chiffre.")
 
-# Bouton d'entraînement
-if st.button("Entraîner le modèle et afficher la matrice de confusion"):
-    response = requests.post("http://api:8000/retrain")
-    if response.status_code == 200:
-        result = response.json()
-        st.success(result["message"])
-        st.subheader("Matrice de confusion:")
-        df_cm = pd.DataFrame(result["confusion_matrix"])
-        st.dataframe(df_cm) #afficher sous forme de dataframe
-    else:
-        st.error("Erreur lors du réentraînement du modèle.")
