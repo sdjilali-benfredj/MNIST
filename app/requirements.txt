@@ -4,3 +4,5 @@ requests
 Pillow
 numpy
 pytest
+loguru
+bcrypt
