@@ -10,11 +10,37 @@ from PIL import Image
 from tqdm import tqdm
 from sklearn.metrics import confusion_matrix
 
+from prometheus_client import Counter, Histogram, Gauge, generate_latest
+import psutil
+import time
+
 app = FastAPI()
 
 MODEL_PATH = "models/mnist_model.joblib"
 IMAGE_SIZE = 28
 
+
+# Définition des métriques
+prediction_total = Counter('prediction_total', 'Nombre total de prédictions effectuées')
+prediction_latency = Histogram('prediction_latency_seconds', 'Temps de latence des prédictions')
+cpu_usage = Gauge('cpu_percent', 'Utilisation du CPU en pourcentage')
+memory_usage = Gauge('memory_percent', 'Utilisation de la mémoire en pourcentage')
+
+@app.get("/metrics")
+def get_metrics():
+    """ Expose les métriques Prometheus """
+    cpu_usage.set(psutil.cpu_percent(interval=1))
+    memory_usage.set(psutil.virtual_memory().percent)
+    return generate_latest()
+
+@app.post("/predict")
+def predict(image: str):  # Simplifié pour l'exemple
+    start_time = time.time()
+    prediction_total.inc()  # Incrémente le compteur de prédictions
+    time.sleep(0.1)  # Simulation de la latence
+    latency = time.time() - start_time
+    prediction_latency.observe(latency)
+    return {"prediction": 5, "latency": latency}
 
 def load_or_train_model():
     """Charge le modèle pré-entraîné s'il existe, sinon l'entraîne et le sauvegarde."""

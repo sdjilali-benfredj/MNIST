@@ -6,6 +6,9 @@ from PIL import Image
 import numpy as np
 from sklearn.datasets import fetch_openml
 
+import pytest
+from app import predict
+
 client = TestClient(app)
 
 IMAGE_SIZE = 28
@@ -74,3 +77,7 @@ def test_retrain_only_if_no_model():
   # Essaie de réentraîner à nouveau, cela ne devrait pas avoir d'effet car le modèle existe déjà
   response2 = client.post("/retrain")
   assert response2.status_code == 200
+  
+def test_predict_without_drawing():
+    with pytest.raises(ValueError):
+        predict(None)  # Simule une requête sans dessin

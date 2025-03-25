@@ -64,3 +64,33 @@ if st.button("Entraîner le modèle et afficher la matrice de confusion"):
         st.dataframe(df_cm) #afficher sous forme de dataframe
     else:
         st.error("Erreur lors du réentraînement du modèle.")
+        
+        
+
+
+if "user_activity" not in st.session_state:
+    st.session_state["user_activity"] = []
+
+def log_activity(action, detail):
+    """ Enregistre une activité utilisateur """
+    st.session_state["user_activity"].append({"action": action, "detail": detail})
+
+def show_logs():
+    """ Affiche les logs d'activité """
+    st.write(st.session_state["user_activity"])
+
+# Exemple d'utilisation
+st.button("Se connecter", on_click=lambda: log_activity("Connexion", "Utilisateur connecté"))
+st.button("Afficher logs", on_click=show_logs)
+
+
+if "drawing" not in st.session_state:
+    st.session_state["drawing"] = None
+
+def predict():
+    if st.session_state["drawing"] is None:
+        st.error("Veuillez dessiner un chiffre avant de prédire.")
+        return
+    st.success("Prédiction envoyée !")
+
+st.button("Prédire", on_click=predict)
