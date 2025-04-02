@@ -63,15 +63,29 @@ async def predict(file: UploadFile, db: Annotated[sqlite3.Connection, Depends(ge
     predictions = cnn_model.predict(image)
     predicted_class = np.argmax(predictions, axis=1)[0]
     confidence = float(np.max(predictions, axis=1)[0])
+    prediction_counter.inc()
+    
+    # Sauvegarder le résultat dans la base de données
+    save_prediction(db, int(user_id), predicted_class, confidence)
+    return PredictionOutput(prediction=int(predicted_class), confidence=confidence)
+
+@app.post("/predict_test/", response_model=PredictionOutput)
+async def predict_test(file: UploadFile, db: Annotated[sqlite3.Connection, Depends(get_db)], user_id: str):
+    """
+    Predicts the digit in the input image using the loaded CNN model.
+    """
+    image = Image.open(file.file).convert("L").resize((IMAGE_SIZE, IMAGE_SIZE))
+    image = np.array(image).reshape(1, IMAGE_SIZE , IMAGE_SIZE) / 255.0
+
+    predictions = cnn_model.predict(image)
+    predicted_class = np.argmax(predictions, axis=1)[0]
+    confidence = float(np.max(predictions, axis=1)[0])
     print("="*20)
     print("user id", user_id)
     print("predicted_class", predicted_class)
     print("confidence", confidence)
     print("="*20)
-    prediction_counter.inc()
-    
-    # Sauvegarder le résultat dans la base de données
-    save_prediction(db, int(user_id), predicted_class, confidence)
+
     return PredictionOutput(prediction=int(predicted_class), confidence=confidence)
 
 
