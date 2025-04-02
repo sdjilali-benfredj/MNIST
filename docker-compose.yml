@@ -10,8 +10,8 @@ services:
     networks:
       - my_network
     entrypoint: ["pytest", "test/test_api.py", "-v"]    
-    # depends_on:
-    #   - prometheus
+    depends_on:
+      - prometheus
       
   tests:
     build: ./api
