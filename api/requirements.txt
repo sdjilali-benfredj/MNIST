@@ -9,3 +9,4 @@ python-multipart
 pytest
 numpy
 httpx
+bcrypt

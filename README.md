@@ -5,16 +5,24 @@ Ce projet déploie un modèle de réseau de neurones convolutif (CNN) entraîné
 ## Structure du Projet
 
 ```
-mnist_api/
+mnist/
 ├── api/
 │   ├── main.py         # Application FastAPI
 │   ├── models.py       # Modèles Pydantic
 │   ├── cnn5r.py        # Modèles de prédiction
 │   ├── cnn_model.py    # Chargement du modèle CNN
+│   ├── db.py           # outils bdd
 │   ├── Dockerfile          # Configuration Docker
 │   ├── requirements.txt    # Dépendances Python   
 │   └── test/
 │       └── test_api.py     # Tests Pytest pour l'API
+│
+├── app/
+│   ├── streamlit_app.py    # Application streamlit
+│   ├── Dockerfile          # Configuration Docker
+│   ├── requirements.txt    # Dépendances Python   
+│   └── test/
+│       └── test_app.py     # Tests Pytest pour l'application
 │
 ├── prometheus/         # Configuration Prometheus
 │   └── prometheus.yml

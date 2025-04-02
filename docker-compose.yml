@@ -4,37 +4,47 @@ services:
     build: ./api
     ports:
       - "8000:8000"
+    volumes:
+      # - sqlite_data:/api/data 
+      - ./data:/api/data
     networks:
       - my_network
-    depends_on:
-      - prometheus
+  #   depends_on:
+  #     - prometheus
       
-  prometheus:
-    image: prom/prometheus:latest
-    volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-    ports:
-      - "9090:9090"
-    networks:
-      - my_network
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   volumes:
+  #     - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+  #   ports:
+  #     - "9090:9090"
+  #   networks:
+  #     - my_network
+  #   healthcheck:  # ✅ Ajoute un vrai test de santé
+  #     test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/-/ready"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
 
-  grafana:
-    image: grafana/grafana:latest
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
-      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/dashboards      
-    networks:
-      - my_network
-    depends_on:
-      - prometheus
-  node-exporter:
-    image: prom/node-exporter:latest
-    ports:
-      - "9100:9100"
-    networks:
-      - my_network
+
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+  #     - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards      
+  #   networks:
+  #     - my_network
+  #   depends_on:
+  #     prometheus:
+  #       condition: service_healthy
+  # node-exporter:
+  #   image: prom/node-exporter:latest
+  #   ports:
+  #     - "9100:9100"
+  #   networks:
+  #     - my_network
 
 
   streamlit:
@@ -48,3 +58,6 @@ services:
 
 networks:
   my_network:
+
+# volumes:
+#   sqlite_data:
