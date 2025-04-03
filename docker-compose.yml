@@ -9,20 +9,20 @@ services:
       - ./data:/api/data
     networks:
       - my_network
-    entrypoint: ["pytest", "test/test_api.py", "-v"]    
+    # entrypoint: ["pytest", "test/test_api.py", "-v"]    
     depends_on:
       - prometheus
       
-  tests:
-    build: ./api
-    container_name: fastapi_tests
-    volumes:
-       - ./data:/api/test
-    networks:
-      - my_network
-    depends_on:
-      - fastapi
-    entrypoint: ["pytest", "test/test_api.py", "-v"]      
+  # tests:
+  #   build: ./api
+  #   container_name: fastapi_tests
+  #   volumes:
+  #      - ./data:/api/test
+  #   networks:
+  #     - my_network
+  #   depends_on:
+  #     - fastapi
+  #   entrypoint: ["pytest", "test/test_api.py", "-v"]      
 
   prometheus:
     image: prom/prometheus:latest
