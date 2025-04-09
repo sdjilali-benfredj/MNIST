@@ -3,3 +3,4 @@
 __pycache__
 .pytest_cache
 users.db
+grafana_data

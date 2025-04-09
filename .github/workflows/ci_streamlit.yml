@@ -31,4 +31,4 @@ jobs:
 
       - name: Run tests with pytest
         run: |
-          pytest app/tests/ --maxfail=1 --disable-warnings --tb=short
+          pytest app/test/ --maxfail=1 --disable-warnings --tb=short
